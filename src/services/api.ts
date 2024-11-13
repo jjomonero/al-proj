@@ -3,6 +3,9 @@ import { Property, Contract, Payment, Appointment } from "@/types";
 // Simulated API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Base URL configuration
+const BASE_URL = import.meta.env.VITE_API_URL || "https://lov-p-3e7c78b3-720f-4640-b061-a876617413c1.fly.dev";
+
 // Mock data
 const properties: Property[] = [
   {
@@ -94,6 +97,19 @@ const appointments: Appointment[] = [
     status: "scheduled"
   }
 ];
+
+// API helper function to handle requests
+const handleRequest = async (endpoint: string) => {
+  try {
+    await delay(1000); // Simulate network delay
+    const url = `${BASE_URL}${endpoint}`;
+    // For now, return mock data directly since we're using simulated data
+    return null;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
+};
 
 export const api = {
   properties: {
