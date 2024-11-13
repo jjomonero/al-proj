@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/services/api";
-import { Building, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,12 +11,33 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
+
+type Property = Tables<"properties">;
 
 const Properties = () => {
   const { toast } = useToast();
+
   const { data: properties, isLoading } = useQuery({
     queryKey: ["properties"],
-    queryFn: api.properties.list,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar imóveis",
+          description: error.message,
+        });
+        throw error;
+      }
+
+      return data as Property[];
+    },
   });
 
   const handleAddProperty = () => {
