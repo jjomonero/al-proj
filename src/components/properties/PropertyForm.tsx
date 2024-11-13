@@ -52,9 +52,17 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
     },
   });
 
-  async function onSubmit(data: PropertyFormValues) {
+  async function onSubmit(values: PropertyFormValues) {
     try {
-      const { error } = await supabase.from("properties").insert(data);
+      const { error } = await supabase.from("properties").insert({
+        title: values.title,
+        address: values.address,
+        type: values.type,
+        bedrooms: values.bedrooms,
+        bathrooms: values.bathrooms,
+        area: values.area,
+        price: values.price,
+      });
       
       if (error) throw error;
 
@@ -110,7 +118,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />

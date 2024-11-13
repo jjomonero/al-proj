@@ -39,9 +39,14 @@ export function TenantForm({ onSuccess }: TenantFormProps) {
     },
   });
 
-  async function onSubmit(data: TenantFormValues) {
+  async function onSubmit(values: TenantFormValues) {
     try {
-      const { error } = await supabase.from("tenants").insert(data);
+      const { error } = await supabase.from("tenants").insert({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        cpf: values.cpf,
+      });
       
       if (error) throw error;
 
