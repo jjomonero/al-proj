@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,16 +11,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PropertyForm } from "@/components/properties/PropertyForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 
 type Property = Tables<"properties">;
 
 const Properties = () => {
-  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
 
-  const { data: properties, isLoading } = useQuery({
+  const { data: properties, refetch } = useQuery({
     queryKey: ["properties"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,29 +35,15 @@ const Properties = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar imóveis",
-          description: error.message,
-        });
-        throw error;
-      }
-
+      if (error) throw error;
       return data as Property[];
     },
   });
 
-  const handleAddProperty = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "Em breve você poderá adicionar novos imóveis.",
-    });
+  const handleSuccess = () => {
+    setOpen(false);
+    refetch();
   };
-
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
 
   return (
     <div className="p-8">
@@ -60,10 +54,20 @@ const Properties = () => {
             Gerencie seus imóveis cadastrados
           </p>
         </div>
-        <Button onClick={handleAddProperty}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Imóvel
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Imóvel
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cadastrar Imóvel</DialogTitle>
+            </DialogHeader>
+            <PropertyForm onSuccess={handleSuccess} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border">

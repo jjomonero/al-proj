@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/services/api";
-import { FileText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +11,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ContractForm } from "@/components/contracts/ContractForm";
+import { supabase } from "@/integrations/supabase/client";
 
 const statusMap = {
   active: { label: "Ativo", variant: "success" },
@@ -20,22 +28,29 @@ const statusMap = {
 } as const;
 
 const Contracts = () => {
-  const { toast } = useToast();
-  const { data: contracts, isLoading } = useQuery({
+  const [open, setOpen] = useState(false);
+
+  const { data: contracts, refetch } = useQuery({
     queryKey: ["contracts"],
-    queryFn: api.contracts.list,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select(`
+          *,
+          property:properties(title),
+          tenant:tenants(name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
   });
 
-  const handleAddContract = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "Em breve você poderá criar novos contratos.",
-    });
+  const handleSuccess = () => {
+    setOpen(false);
+    refetch();
   };
-
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
 
   return (
     <div className="p-8">
@@ -46,10 +61,20 @@ const Contracts = () => {
             Gerencie seus contratos de aluguel
           </p>
         </div>
-        <Button onClick={handleAddContract}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Contrato
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Contrato
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cadastrar Contrato</DialogTitle>
+            </DialogHeader>
+            <ContractForm onSuccess={handleSuccess} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border">
@@ -57,22 +82,35 @@ const Contracts = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Imóvel</TableHead>
-              <TableHead>Locatário</TableHead>
+              <TableHead>Inquilino</TableHead>
               <TableHead>Valor</TableHead>
-              <TableHead>Vencimento</TableHead>
+              <TableHead>Início</TableHead>
+              <TableHead>Término</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {contracts?.map((contract) => (
               <TableRow key={contract.id}>
-                <TableCell className="font-medium">{contract.property}</TableCell>
-                <TableCell>{contract.tenant}</TableCell>
-                <TableCell>{contract.value}</TableCell>
-                <TableCell>{contract.dueDate}</TableCell>
+                <TableCell className="font-medium">
+                  {contract.property?.title}
+                </TableCell>
+                <TableCell>{contract.tenant?.name}</TableCell>
                 <TableCell>
-                  <Badge variant={statusMap[contract.status].variant as any}>
-                    {statusMap[contract.status].label}
+                  {contract.monthly_rent.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </TableCell>
+                <TableCell>
+                  {new Date(contract.start_date).toLocaleDateString("pt-BR")}
+                </TableCell>
+                <TableCell>
+                  {new Date(contract.end_date).toLocaleDateString("pt-BR")}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={statusMap[contract.status as keyof typeof statusMap].variant as any}>
+                    {statusMap[contract.status as keyof typeof statusMap].label}
                   </Badge>
                 </TableCell>
               </TableRow>

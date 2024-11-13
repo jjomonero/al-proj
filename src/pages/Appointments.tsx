@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/services/api";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const statusMap = {
   scheduled: { label: "Agendado", variant: "default" },
@@ -20,22 +20,21 @@ const statusMap = {
 } as const;
 
 const Appointments = () => {
-  const { toast } = useToast();
-  const { data: appointments, isLoading } = useQuery({
+  const { data: appointments } = useQuery({
     queryKey: ["appointments"],
-    queryFn: api.appointments.list,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          *,
+          property:properties(title)
+        `)
+        .order("date", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
   });
-
-  const handleAddAppointment = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "Em breve você poderá agendar novas visitas.",
-    });
-  };
-
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
 
   return (
     <div className="p-8">
@@ -46,7 +45,7 @@ const Appointments = () => {
             Gerencie as visitas aos imóveis
           </p>
         </div>
-        <Button onClick={handleAddAppointment}>
+        <Button>
           <Plus className="w-4 h-4 mr-2" />
           Novo Agendamento
         </Button>
@@ -66,13 +65,17 @@ const Appointments = () => {
           <TableBody>
             {appointments?.map((appointment) => (
               <TableRow key={appointment.id}>
-                <TableCell className="font-medium">{appointment.property}</TableCell>
-                <TableCell>{appointment.client}</TableCell>
-                <TableCell>{appointment.date}</TableCell>
+                <TableCell className="font-medium">
+                  {appointment.property?.title}
+                </TableCell>
+                <TableCell>{appointment.client_name}</TableCell>
+                <TableCell>
+                  {new Date(appointment.date).toLocaleDateString("pt-BR")}
+                </TableCell>
                 <TableCell>{appointment.time}</TableCell>
                 <TableCell>
-                  <Badge variant={statusMap[appointment.status].variant as any}>
-                    {statusMap[appointment.status].label}
+                  <Badge variant={statusMap[appointment.status as keyof typeof statusMap].variant as any}>
+                    {statusMap[appointment.status as keyof typeof statusMap].label}
                   </Badge>
                 </TableCell>
               </TableRow>
