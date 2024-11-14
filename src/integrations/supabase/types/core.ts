@@ -37,30 +37,4 @@ export interface CoreTypes {
       updated_at?: string;
     };
   };
-  tenants: {
-    Row: {
-      id: string;
-      name: string;
-      email: string;
-      phone: string | null;
-      cpf: string;
-      created_at: string;
-      updated_at: string;
-    };
-    Insert: {
-      name: string;
-      email: string;
-      phone?: string | null;
-      cpf: string;
-      created_at?: string;
-      updated_at?: string;
-    };
-    Update: {
-      name?: string;
-      email?: string;
-      phone?: string | null;
-      cpf?: string;
-      updated_at?: string;
-    };
-  };
 }
