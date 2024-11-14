@@ -42,6 +42,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Error in chat-bot function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
