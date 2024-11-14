@@ -40,6 +40,26 @@ const Payments = () => {
     },
   });
 
+  const handleCreatePayment = async () => {
+    try {
+      const response = await supabase.functions.invoke('create-payment', {
+        body: {
+          contractId: "contract-id", // Será substituído pelo ID real do contrato
+          amount: 1000,
+          dueDate: "2024-04-01",
+          tenantId: "tenant-id" // Será substituído pelo ID real do inquilino
+        }
+      });
+
+      if (response.error) throw response.error;
+      
+      // Atualizar a lista de pagamentos
+      // queryClient.invalidateQueries(["payments"]);
+    } catch (error) {
+      console.error("Erro ao criar pagamento:", error);
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
@@ -49,7 +69,7 @@ const Payments = () => {
             Gerencie os pagamentos dos aluguéis
           </p>
         </div>
-        <Button>
+        <Button onClick={handleCreatePayment}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Pagamento
         </Button>
