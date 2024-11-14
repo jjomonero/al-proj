@@ -1,16 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
-const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY')
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,26 +12,64 @@ serve(async (req) => {
 
   try {
     const { event, payment } = await req.json()
-    console.log('Received webhook:', { event, payment })
 
-    if (event === 'PAYMENT_RECEIVED') {
-      const { error } = await supabase
-        .from('payments')
-        .update({ 
-          status: 'paid',
-          paid_at: new Date().toISOString()
-        })
-        .eq('asaas_id', payment.id)
+    // Validar webhook do ASAAS
+    const webhookToken = req.headers.get('asaas-access-token')
+    if (webhookToken !== Deno.env.get('ASAAS_WEBHOOK_TOKEN')) {
+      throw new Error('Token inválido')
+    }
 
-      if (error) throw error
+    // Mapear status do ASAAS para nosso sistema
+    const statusMap = {
+      RECEIVED: 'paid',
+      CONFIRMED: 'paid',
+      PENDING: 'pending',
+      OVERDUE: 'late',
+      REFUNDED: 'refunded',
+      FAILED: 'failed'
+    }
+
+    const status = statusMap[payment.status] || 'pending'
+    const paidAt = ['RECEIVED', 'CONFIRMED'].includes(payment.status) ? payment.paymentDate : null
+
+    // Atualizar pagamento no Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Credenciais do Supabase não configuradas')
+    }
+
+    const supabaseResponse = await fetch(
+      `${supabaseUrl}/rest/v1/payments?asaas_id=eq.${payment.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          status,
+          paid_at: paidAt,
+          updated_at: new Date().toISOString()
+        }),
+      }
+    )
+
+    if (!supabaseResponse.ok) {
+      throw new Error('Erro ao atualizar pagamento no banco de dados')
     }
 
     return new Response(
       JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   } catch (error) {
-    console.error('Error processing webhook:', error)
+    console.error('Error in asaas-webhook function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

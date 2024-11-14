@@ -1,17 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
-const ASAAS_API_KEY = Deno.env.get('ASAAS_API_KEY')
-const ASAAS_API_URL = 'https://api.asaas.com/v3'
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,58 +12,66 @@ serve(async (req) => {
   }
 
   try {
-    const { contractId, amount, dueDate, description } = await req.json()
+    const { contractId, amount, dueDate, tenantId } = await req.json()
 
-    // Buscar informações do contrato e inquilino
-    const { data: contract, error: contractError } = await supabase
-      .from('contracts')
-      .select(`
-        *,
-        tenant:tenants(*)
-      `)
-      .eq('id', contractId)
-      .single()
-
-    if (contractError) throw contractError
-
-    // Criar cobrança no Asaas
-    const asaasResponse = await fetch(`${ASAAS_API_URL}/payments`, {
+    // Criar cobrança no ASAAS
+    const response = await fetch('https://api.asaas.com/v3/payments', {
       method: 'POST',
       headers: {
-        'access_token': ASAAS_API_KEY!,
         'Content-Type': 'application/json',
+        'access_token': Deno.env.get('ASAAS_API_KEY') || '',
       },
       body: JSON.stringify({
-        customer: contract.tenant.asaas_id,
+        customer: tenantId,
         billingType: 'BOLETO',
         value: amount,
-        dueDate,
-        description,
-        externalReference: contractId,
+        dueDate: dueDate,
+        description: `Aluguel - Contrato ${contractId}`,
       }),
     })
 
-    const asaasPayment = await asaasResponse.json()
+    const data = await response.json()
 
-    // Registrar pagamento no Supabase
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .insert({
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao criar cobrança no ASAAS')
+    }
+
+    // Atualizar pagamento no Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Credenciais do Supabase não configuradas')
+    }
+
+    const supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
         contract_id: contractId,
-        amount,
+        amount: amount,
         due_date: dueDate,
         status: 'pending',
-        asaas_id: asaasPayment.id,
-      })
+        asaas_id: data.id,
+      }),
+    })
 
-    if (paymentError) throw paymentError
+    if (!supabaseResponse.ok) {
+      throw new Error('Erro ao salvar pagamento no banco de dados')
+    }
 
     return new Response(
-      JSON.stringify({ success: true, payment: asaasPayment }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      JSON.stringify({ success: true, payment: data }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   } catch (error) {
-    console.error('Error creating payment:', error)
+    console.error('Error in create-payment function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
