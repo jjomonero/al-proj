@@ -137,6 +137,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          asaas_id: string | null
           contract_id: string
           created_at: string
           due_date: string
@@ -147,6 +148,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          asaas_id?: string | null
           contract_id: string
           created_at?: string
           due_date: string
@@ -157,6 +159,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          asaas_id?: string | null
           contract_id?: string
           created_at?: string
           due_date?: string
@@ -284,6 +287,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          asaas_id: string | null
           cpf: string
           created_at: string
           email: string
@@ -293,6 +297,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asaas_id?: string | null
           cpf: string
           created_at?: string
           email: string
@@ -302,6 +307,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asaas_id?: string | null
           cpf?: string
           created_at?: string
           email?: string
