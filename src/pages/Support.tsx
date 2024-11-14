@@ -2,8 +2,17 @@ import { ChatBot } from "@/components/support/ChatBot";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface FAQTopic {
+  id: string;
+  title: string;
+  description: string;
+  frequency: number;
+  created_at: string;
+  updated_at: string;
+}
+
 const Support = () => {
-  const { data: faqTopics } = useQuery({
+  const { data: faqTopics } = useQuery<FAQTopic[]>({
     queryKey: ["faq-topics"],
     queryFn: async () => {
       const { data, error } = await supabase

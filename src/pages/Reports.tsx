@@ -9,14 +9,19 @@ const Reports = () => {
   const { data: metrics } = useQuery({
     queryKey: ["metrics"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("metrics")
-        .select("*")
-        .order("date", { ascending: false })
-        .limit(1);
+      const metricsPromises = [
+        supabase.from("properties").select("*", { count: "exact" }),
+        supabase.from("contracts").select("*").eq("status", "active"),
+        supabase.from("tenants").select("*", { count: "exact" })
+      ];
 
-      if (error) throw error;
-      return data[0];
+      const [properties, contracts, tenants] = await Promise.all(metricsPromises);
+      
+      return {
+        properties_count: properties.count || 0,
+        active_contracts: contracts.data?.length || 0,
+        tenants_count: tenants.count || 0
+      };
     },
   });
 
@@ -32,19 +37,19 @@ const Reports = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatsCard
           title="Total de Imóveis"
-          value={metrics?.properties_count || "0"}
+          value={metrics?.properties_count || 0}
           icon={Building2}
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Contratos Ativos"
-          value={metrics?.active_contracts || "0"}
+          value={metrics?.active_contracts || 0}
           icon={Receipt}
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Inquilinos"
-          value={metrics?.tenants_count || "0"}
+          value={metrics?.tenants_count || 0}
           icon={Users}
           trend={{ value: 5, isPositive: true }}
         />
