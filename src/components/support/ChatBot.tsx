@@ -32,16 +32,6 @@ export function ChatBot() {
       setMessages(prev => [...prev, { content: data.answer, isBot: true }]);
       setInput("");
 
-      // Salvar a conversa no banco
-      const { error: dbError } = await supabase
-        .from('chat_conversations')
-        .insert({
-          user_id: 'anonymous', // Substituir pelo ID do usuário quando houver autenticação
-          topic: input.substring(0, 50)
-        });
-
-      if (dbError) throw dbError;
-
     } catch (error) {
       toast({
         variant: "destructive",
