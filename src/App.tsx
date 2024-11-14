@@ -8,6 +8,7 @@ import Properties from "./pages/Properties";
 import Contracts from "./pages/Contracts";
 import Appointments from "./pages/Appointments";
 import Payments from "./pages/Payments";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/contratos" element={<Contracts />} />
           <Route path="/agendamentos" element={<Appointments />} />
           <Route path="/pagamentos" element={<Payments />} />
+          <Route path="/suporte" element={<Support />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
