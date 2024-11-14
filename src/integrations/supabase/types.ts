@@ -107,6 +107,33 @@ export type Database = {
           },
         ]
       }
+      metrics: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          name: string
+          type: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          name: string
+          type: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          type?: string
+          value?: number
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -189,6 +216,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tenant_documents: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          tenant_id: string
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenants: {
         Row: {
