@@ -29,12 +29,13 @@ serve(async (req) => {
         },
         method: "POST",
         body: JSON.stringify({
-          inputs: `<s>[INST] <<SYS>> Você é um assistente especializado em gestão de aluguéis e imóveis. Ajude os usuários com dúvidas sobre contratos, pagamentos, e processos relacionados. <</SYS>> ${prompt} [/INST]`,
+          inputs: prompt,
           parameters: {
             max_new_tokens: 500,
             temperature: 0.7,
             top_p: 0.95,
             do_sample: true,
+            return_full_text: false
           },
         }),
       }
@@ -60,8 +61,7 @@ serve(async (req) => {
       throw new Error('Invalid response structure from HuggingFace API')
     }
 
-    let answer = data[0].generated_text
-    answer = answer.split("[/INST]").pop()?.trim() || ''
+    const answer = data[0].generated_text.trim()
 
     if (!answer) {
       throw new Error('Empty response from HuggingFace API')
