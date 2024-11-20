@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface Message {
   content: string;
@@ -81,10 +82,15 @@ export function ChatBot() {
             placeholder="Digite sua mensagem..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+            disabled={isLoading}
           />
           <Button onClick={handleSendMessage} disabled={isLoading}>
-            Enviar
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Enviar"
+            )}
           </Button>
         </div>
       </div>

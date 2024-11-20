@@ -14,26 +14,31 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json()
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um assistente especializado em gestão de aluguéis e imóveis. Ajude os usuários com dúvidas sobre contratos, pagamentos, e processos relacionados.'
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
+      {
+        headers: {
+          Authorization: `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          inputs: `<s>[INST] <<SYS>> Você é um assistente especializado em gestão de aluguéis e imóveis. Ajude os usuários com dúvidas sobre contratos, pagamentos, e processos relacionados. <</SYS>> ${prompt} [/INST]`,
+          parameters: {
+            max_new_tokens: 500,
+            temperature: 0.7,
+            top_p: 0.95,
+            do_sample: true,
           },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    })
+        }),
+      }
+    );
 
-    const data = await response.json()
-    const answer = data.choices[0].message.content
+    const data = await response.json();
+    let answer = data[0].generated_text;
+    
+    // Remove o prompt do início da resposta
+    answer = answer.split("[/INST]").pop().trim();
 
     return new Response(
       JSON.stringify({ answer }),
