@@ -20,24 +20,29 @@ export function ChatBot() {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
+    const userMessage = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { content: userMessage, isBot: false }]);
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-      setMessages(prev => [...prev, { content: input, isBot: false }]);
-      
       const { data, error } = await supabase.functions.invoke('chat-bot', {
-        body: { prompt: input }
+        body: { prompt: userMessage }
       });
 
       if (error) throw error;
 
-      setMessages(prev => [...prev, { content: data.answer, isBot: true }]);
-      setInput("");
-
+      if (data?.answer) {
+        setMessages(prev => [...prev, { content: data.answer, isBot: true }]);
+      } else {
+        throw new Error("Resposta inválida do assistente");
+      }
     } catch (error) {
+      console.error("Chat error:", error);
       toast({
         variant: "destructive",
         title: "Erro ao enviar mensagem",
-        description: "Tente novamente mais tarde"
+        description: "Não foi possível processar sua mensagem. Tente novamente mais tarde."
       });
     } finally {
       setIsLoading(false);
