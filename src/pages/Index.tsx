@@ -22,25 +22,25 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatsCard
               title="Total de Imóveis"
-              value="48"
+              value={48}
               icon={Building}
               trend={{ value: 12, isPositive: true }}
             />
             <StatsCard
               title="Contratos Ativos"
-              value="32"
+              value={32}
               icon={FileText}
               trend={{ value: 8, isPositive: true }}
             />
             <StatsCard
               title="Visitas Agendadas"
-              value="15"
+              value={15}
               icon={Calendar}
               trend={{ value: 5, isPositive: true }}
             />
             <StatsCard
               title="Receita Mensal"
-              value="R$ 45.850"
+              value={45850}
               icon={DollarSign}
               trend={{ value: 3, isPositive: false }}
             />

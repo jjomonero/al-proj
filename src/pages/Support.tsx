@@ -1,15 +1,9 @@
 import { ChatBot } from "@/components/support/ChatBot";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SupportTypes } from "@/integrations/supabase/types/support";
 
-interface FAQTopic {
-  id: string;
-  title: string;
-  description: string;
-  frequency: number;
-  created_at: string;
-  updated_at: string;
-}
+type FAQTopic = SupportTypes["faq_topics"]["Row"];
 
 const Support = () => {
   const { data: faqTopics } = useQuery<FAQTopic[]>({

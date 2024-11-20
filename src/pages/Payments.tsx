@@ -42,16 +42,18 @@ const Payments = () => {
 
   const handleCreatePayment = async () => {
     try {
-      const response = await supabase.functions.invoke('create-payment', {
-        body: {
-          contractId: "contract-id", // Será substituído pelo ID real do contrato
+      const { data, error } = await supabase
+        .from("payments")
+        .insert({
+          contract_id: "contract-id", // Será substituído pelo ID real do contrato
           amount: 1000,
-          dueDate: "2024-04-01",
-          tenantId: "tenant-id" // Será substituído pelo ID real do inquilino
-        }
-      });
+          due_date: "2024-04-01",
+          status: "pending"
+        })
+        .select()
+        .single();
 
-      if (response.error) throw response.error;
+      if (error) throw error;
       
       // Atualizar a lista de pagamentos
       // queryClient.invalidateQueries(["payments"]);
