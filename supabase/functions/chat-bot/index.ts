@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json()
+    console.log('Received prompt:', prompt)
 
     const response = await fetch(
       "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
@@ -35,10 +36,17 @@ serve(async (req) => {
     );
 
     const data = await response.json();
+    console.log('HuggingFace API response:', data)
+
+    if (!Array.isArray(data) || !data[0]?.generated_text) {
+      console.error('Invalid response format:', data)
+      throw new Error('Invalid response from HuggingFace API')
+    }
+
     let answer = data[0].generated_text;
-    
-    // Remove o prompt do início da resposta
     answer = answer.split("[/INST]").pop().trim();
+
+    console.log('Processed answer:', answer)
 
     return new Response(
       JSON.stringify({ answer }),
@@ -49,7 +57,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in chat-bot function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'An error occurred while processing your request'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
