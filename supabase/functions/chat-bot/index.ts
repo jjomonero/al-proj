@@ -15,11 +15,16 @@ serve(async (req) => {
     const { prompt } = await req.json()
     console.log('Received prompt:', prompt)
 
+    const apiKey = Deno.env.get('HUGGINGFACE_API_KEY')
+    if (!apiKey) {
+      throw new Error('HuggingFace API key not configured')
+    }
+
     const response = await fetch(
       "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
       {
         headers: {
-          Authorization: `Bearer ${Deno.env.get('HUGGINGFACE_API_KEY')}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         method: "POST",
@@ -35,16 +40,32 @@ serve(async (req) => {
       }
     );
 
-    const data = await response.json();
-    console.log('HuggingFace API response:', data)
-
-    if (!Array.isArray(data) || !data[0]?.generated_text) {
-      console.error('Invalid response format:', data)
-      throw new Error('Invalid response from HuggingFace API')
+    if (!response.ok) {
+      console.error('HuggingFace API error:', response.status, response.statusText)
+      const errorText = await response.text()
+      console.error('Error details:', errorText)
+      throw new Error(`HuggingFace API error: ${response.status} ${response.statusText}`)
     }
 
-    let answer = data[0].generated_text;
-    answer = answer.split("[/INST]").pop().trim();
+    const data = await response.json()
+    console.log('HuggingFace API response:', JSON.stringify(data))
+
+    if (!Array.isArray(data)) {
+      console.error('Invalid response format (not an array):', data)
+      throw new Error('Invalid response format from HuggingFace API')
+    }
+
+    if (!data[0] || typeof data[0].generated_text !== 'string') {
+      console.error('Invalid response structure:', data)
+      throw new Error('Invalid response structure from HuggingFace API')
+    }
+
+    let answer = data[0].generated_text
+    answer = answer.split("[/INST]").pop()?.trim() || ''
+
+    if (!answer) {
+      throw new Error('Empty response from HuggingFace API')
+    }
 
     console.log('Processed answer:', answer)
 
