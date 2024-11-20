@@ -7,6 +7,7 @@ import {
   CreditCard,
   BarChart3,
   LifeBuoy,
+  MessageSquare,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -19,6 +20,7 @@ const Sidebar = () => {
     { icon: Calendar, label: "Agendamentos", path: "/agendamentos" },
     { icon: CreditCard, label: "Pagamentos", path: "/pagamentos" },
     { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+    { icon: MessageSquare, label: "Chat", path: "/chat" },
     { icon: LifeBuoy, label: "Suporte", path: "/suporte" },
   ];
 

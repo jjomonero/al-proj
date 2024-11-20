@@ -10,6 +10,7 @@ import Appointments from "./pages/Appointments";
 import Payments from "./pages/Payments";
 import Support from "./pages/Support";
 import Reports from "./pages/Reports";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/pagamentos" element={<Payments />} />
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/suporte" element={<Support />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
